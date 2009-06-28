@@ -10,7 +10,8 @@
 #import "Box2D.h"
 
 @interface GameLayer : Layer {
-
+	b2World* world;
+	AtlasSprite* boxSprite;
 }
 
 @end
