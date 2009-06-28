@@ -12,6 +12,7 @@
 @interface GameLayer : Layer {
 	b2World* world;
 	AtlasSprite* boxSprite;
+	CFMutableDictionaryRef touchLocations;
 }
 
 @end
