@@ -18,6 +18,9 @@
 @implementation GameLayer
 
 #define PTM_RATIO 32
+#define MAX_VELOCITY 20
+#define MAX_VELOCITY_IN_PX 100
+#define BULLET_GROUP_INDEX -1 // negative for no collisions
 
 enum {
 	kTagTileMap = 1,
@@ -99,13 +102,12 @@ enum {
 
 - (void)addNewSpriteWithCoords:(CGPoint)p andVector:(b2Vec2)vector
 {
-	CCLOG(@"Add sprite %0.2f x %02.f",p.x, p.y);
 	AtlasSpriteManager *manager = (AtlasSpriteManager*)[self getChildByTag:kTagSpriteManager];
 	
 	// we have a 64x64 sprite sheet with 4 different 32x32 images.  The following code is
 	// just randomly picking one of the images
-	int idx = (CCRANDOM_0_1() > .5 ? 0:1);
-	int idy = (CCRANDOM_0_1() > .5 ? 0:1);
+	int idx = (CCRANDOM_0_1() > .5 ? 0 : 1);
+	int idy = (CCRANDOM_0_1() > .5 ? 0 : 1);
 	AtlasSprite *sprite = [AtlasSprite spriteWithRect:CGRectMake(32*idx, 32*idy, 32, 32) spriteManager:manager];
 	sprite.position = p;
 	[manager addChild:sprite];
@@ -114,15 +116,19 @@ enum {
 	b2BodyDef bodyDef;
 	bodyDef.position.Set(p.x/PTM_RATIO, p.y/PTM_RATIO);
 	bodyDef.userData = sprite;
+	bodyDef.isBullet = true;
+	
+	
 	b2Body *body = world->CreateBody(&bodyDef);
 	b2PolygonDef shapeDef;
 	shapeDef.SetAsBox(.5f, .5f); // these are mid points for our 1m box
 	shapeDef.density = 1.0f;
 	shapeDef.friction = 0.1f;
+	shapeDef.filter.groupIndex = BULLET_GROUP_INDEX;
+	
 	body->CreateShape(&shapeDef);
 	body->SetMassFromShapes();
 	body->SetLinearVelocity(vector);
-	body = NULL;
 }
 
 - (BOOL)ccTouchesBegan:(NSSet *)touches withEvent:(UIEvent *)event
@@ -157,9 +163,20 @@ enum {
 			CFDictionaryRef ref = (CFDictionaryRef)CFDictionaryGetValue(touchLocations, touch);
 			CGPoint s;
 			CGPointMakeWithDictionaryRepresentation(ref, &s);
+			
 			// calculate the angle and velocity
-			float angle = atan2(l.y-s.y, l.x-s.x);
-			b2Vec2 vect(cos(angle)*-24, sin(angle)*-24);
+			float dx = l.x-s.x;
+			float dy = l.y-s.y;
+			
+			float angle = atan2(dy, dx);
+			
+			float distPercent = sqrt(dx*dx+dy*dy)/MAX_VELOCITY_IN_PX;
+			if (distPercent > 1.0f)
+				distPercent = 1.0f;
+			float speed = MAX_VELOCITY*distPercent;
+			
+			b2Vec2 vect(cos(angle)*-speed, sin(angle)*-speed);
+			
 			[self addNewSpriteWithCoords:CGPointMake(160, 100) andVector:vect];
 		}
 		
