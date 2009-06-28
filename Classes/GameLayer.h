@@ -13,6 +13,9 @@
 	b2World* world;
 	AtlasSprite* boxSprite;
 	CFMutableDictionaryRef touchLocations;
+	int direction;
+	b2Body *body;
+	b2Body *catcherBody;
 }
 
 @end

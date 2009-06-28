@@ -10,6 +10,7 @@
 
 @interface GameLayer (Private)
 
+- (void)setupCatcher;
 - (void)tick:(ccTime)dt;
 - (void)addNewSpriteWithCoords:(CGPoint)p andVector:(b2Vec2)vector;
 
@@ -21,11 +22,13 @@
 #define MAX_VELOCITY 20
 #define MAX_VELOCITY_IN_PX 100
 #define BULLET_GROUP_INDEX -1 // negative for no collisions
+#define CATCHER_SPEED_PX 20
 
 enum {
 	kTagTileMap = 1,
 	kTagSpriteManager = 1,
 	kTagAnimation1 = 1,
+	kCatcherSprite = 2,
 };
 
 - (id)init
@@ -33,10 +36,10 @@ enum {
 	self = [super init];
 	if (self != nil)
 	{
+		direction = 1;
 		touchLocations = CFDictionaryCreateMutable(NULL, 0, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
 		
 		CGSize screenSize = [Director sharedDirector].winSize;
-		NSLog(@"Screen width %0.2f screen height %0.2f", screenSize.width, screenSize.height);
 		
 		// set up world bounds, this should be larger than screen as any body that 
 		// reaches the boundary will be frozen
@@ -58,19 +61,47 @@ enum {
 		
 		[self schedule:@selector(tick:)];
 		
-		// set up sprite
+		// set up sprites
+		Sprite *launcher = [Sprite spriteWithFile:@"launcher.png"];
+		launcher.position = CGPointMake(160, 100);
+		[self addChild:launcher z:0];
+		
+		[self setupCatcher];
+		
 		AtlasSpriteManager *manager = [AtlasSpriteManager spriteManagerWithFile:@"blocks.png" capacity:150];
-		[self addChild:manager z:0 tag:kTagSpriteManager];
+		[self addChild:manager z:1 tag:kTagSpriteManager];
 		
 		isTouchEnabled = YES;
 	}
 	return self;
 }
 
+- (void)setupCatcher
+{
+	Sprite *catcher = [Sprite spriteWithFile:@"catcher.png"];
+	catcher.position = CGPointMake(32, 320);
+	[self addChild:catcher z:0 tag:kCatcherSprite];
+	
+	b2BodyDef bodyDef;
+	bodyDef.position.Set(catcher.position.x/PTM_RATIO, (catcher.position.y+20)/PTM_RATIO);
+	
+	b2PolygonDef shapeDef;
+	shapeDef.isSensor = true;
+	shapeDef.SetAsBox(1.0f, .5f); // these are mid points for our 1m box
+	shapeDef.density = 1.0f;
+	shapeDef.friction = 0.1f;
+	
+	catcherBody = world->CreateBody(&bodyDef);
+	
+	catcherBody->CreateShape(&shapeDef);
+}
+
 - (void)dealloc
 {
 	delete world;
 	world = NULL;
+	body = NULL;
+	catcherBody = NULL;
 	CFRelease(touchLocations);
 	touchLocations = NULL;
 	[super dealloc];
@@ -85,6 +116,16 @@ enum {
 	//of the simulation, however, we are using a variable time step here.
 	//You need to make an informed choice, the following URL is useful
 	//http://gafferongames.com/game-physics/fix-your-timestep/
+	
+	Sprite *catcher = (Sprite *)[self getChildByTag:kCatcherSprite];
+	CGPoint p = catcher.position;
+	CGFloat newx = p.x+CATCHER_SPEED_PX*dt*direction;
+	if (newx - 32 <= 0 || newx + 32 >= 320) {
+		direction *= -1;
+	}
+	catcher.position = CGPointMake(newx, p.y);
+	b2Vec2 vec(newx/PTM_RATIO, (p.y+20)/PTM_RATIO);
+	catcherBody->SetXForm(vec, 0.0f);
 	
 	world->Step(dt, 10, 8); // step the physics world
 	// iterate over the bodies in the physics world
@@ -118,13 +159,13 @@ enum {
 	bodyDef.userData = sprite;
 	bodyDef.isBullet = true;
 	
-	
-	b2Body *body = world->CreateBody(&bodyDef);
 	b2PolygonDef shapeDef;
 	shapeDef.SetAsBox(.5f, .5f); // these are mid points for our 1m box
 	shapeDef.density = 1.0f;
 	shapeDef.friction = 0.1f;
 	shapeDef.filter.groupIndex = BULLET_GROUP_INDEX;
+
+	body = world->CreateBody(&bodyDef);
 	
 	body->CreateShape(&shapeDef);
 	body->SetMassFromShapes();
@@ -178,6 +219,8 @@ enum {
 			b2Vec2 vect(cos(angle)*-speed, sin(angle)*-speed);
 			
 			[self addNewSpriteWithCoords:CGPointMake(160, 100) andVector:vect];
+			
+			CFDictionaryRemoveValue(touchLocations, touch);
 		}
 		
 		
