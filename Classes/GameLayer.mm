@@ -9,7 +9,7 @@
 #import "GameLayer.h"
 
 #define PTM_RATIO 32
-#define MAX_VELOCITY 20
+#define MAX_VELOCITY 24
 #define MAX_VELOCITY_IN_PX 100
 #define BULLET_GROUP_INDEX -1 // negative for no collisions
 #define CATCHER_SPEED_PX 20
@@ -76,20 +76,39 @@ void CatcherContactListener::Result(const b2ContactResult* point)
 		b2AABB worldAABB;
 		float borderSize = 96/PTM_RATIO; // we want a 96 pixel border between the screen and the world bounds
 		worldAABB.lowerBound.Set(-borderSize, -borderSize); // bottom left
-		worldAABB.upperBound.Set(screenSize.width/PTM_RATIO + borderSize, 
-								 screenSize.height/PTM_RATIO + borderSize); // top right
+		worldAABB.upperBound.Set(screenSize.width/PTM_RATIO+borderSize, 
+								 screenSize.height/PTM_RATIO+borderSize); // top right
 		b2Vec2 gravity(0.0f, -20.0f);
 		world = new b2World(worldAABB, gravity, YES);
 		listener = new CatcherContactListener();
 		world->SetContactListener(listener);
 		
-		// set up ground, we will make it as wide as the screen
-		b2BodyDef groundBodyDef;
-		groundBodyDef.position.Set(screenSize.width/PTM_RATIO/2, -1.0f);
-		b2Body* groundBody = world->CreateBody(&groundBodyDef);
-		b2PolygonDef groundShapeDef;
-		groundShapeDef.SetAsBox(screenSize.width/PTM_RATIO/2, 1.0f);
-		groundBody->CreateShape(&groundShapeDef);
+		// set up cieling, we will make it as wide as the screen
+		b2BodyDef cielingBodyDef;
+		cielingBodyDef.position.Set(screenSize.width/PTM_RATIO/2, (screenSize.height+PTM_RATIO-20)/PTM_RATIO);
+		b2Body* cielingBody = world->CreateBody(&cielingBodyDef);
+		b2PolygonDef cielingShapeDef;
+		cielingShapeDef.restitution = 0.4f;
+		cielingShapeDef.SetAsBox(screenSize.width/PTM_RATIO/2, 1.0f);
+		cielingBody->CreateShape(&cielingShapeDef);
+		
+		// set up the left wall, we will make it as tall as the screen
+		b2BodyDef leftBodyDef;
+		leftBodyDef.position.Set(-1.0f, screenSize.height/PTM_RATIO/2);
+		b2Body* leftBody = world->CreateBody(&leftBodyDef);
+		b2PolygonDef leftShapeDef;
+		leftShapeDef.restitution = 0.4f;
+		leftShapeDef.SetAsBox(1.0f, screenSize.height/PTM_RATIO/2);
+		leftBody->CreateShape(&leftShapeDef);
+		
+		// set up the right wall, we will make it as tall as the screen
+		b2BodyDef rightBodyDef;
+		rightBodyDef.position.Set((screenSize.width+PTM_RATIO)/PTM_RATIO, screenSize.height/PTM_RATIO/2);
+		b2Body* rightBody = world->CreateBody(&rightBodyDef);
+		b2PolygonDef rightShapeDef;
+		rightShapeDef.restitution = 0.4f;
+		rightShapeDef.SetAsBox(1.0f, screenSize.height/PTM_RATIO/2);
+		rightBody->CreateShape(&rightShapeDef);
 		
 		[self schedule:@selector(tick:)];
 		
@@ -228,6 +247,7 @@ void CatcherContactListener::Result(const b2ContactResult* point)
 	shapeDef.SetAsBox(.5f, .5f); // these are mid points for our 1m box
 	shapeDef.density = 1.0f;
 	shapeDef.friction = 0.1f;
+	shapeDef.restitution = 0.1f;
 	shapeDef.filter.groupIndex = BULLET_GROUP_INDEX;
 
 	body = world->CreateBody(&bodyDef);
