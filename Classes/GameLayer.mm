@@ -114,6 +114,10 @@ void CatcherContactListener::Result(const b2ContactResult* point)
 		
 		[self schedule:@selector(tick:)];
 		
+		scoreLabel = [[Label alloc] initWithString:@"Score: 0" fontName:@"Helvetica-Bold" fontSize:20];
+		scoreLabel.position = CGPointMake(160, 440);
+		[self addChild:scoreLabel z:3];
+		
 		// set up sprites
 		Sprite *launcher = [Sprite spriteWithFile:@"launcher.png"];
 		launcher.position = CGPointMake(160, 100);
@@ -164,6 +168,7 @@ void CatcherContactListener::Result(const b2ContactResult* point)
 	CFRelease(touchLocations);
 	touchLocations = NULL;
 	[captured release];
+	[scoreLabel release];
 	[[NSNotificationCenter defaultCenter] removeObserver:self];
 	[super dealloc];
 }
@@ -178,7 +183,7 @@ void CatcherContactListener::Result(const b2ContactResult* point)
 	{
 		[captured addObject:sprite];
 		score += 100;
-		NSLog(@"score: %i", score);
+		[scoreLabel setString:[NSString stringWithFormat:@"Score: %i", score]];
 	}
 }
 

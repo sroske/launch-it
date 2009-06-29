@@ -21,6 +21,7 @@ public:
 @interface GameLayer : Layer {
 	b2World *world;
 	AtlasSprite *boxSprite;
+	Label *scoreLabel;
 	CFMutableDictionaryRef touchLocations;
 	CGFloat directionUpDown;
 	CGFloat direction;
