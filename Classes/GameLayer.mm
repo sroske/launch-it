@@ -8,6 +8,48 @@
 
 #import "GameLayer.h"
 
+#define PTM_RATIO 32
+#define MAX_VELOCITY 20
+#define MAX_VELOCITY_IN_PX 100
+#define BULLET_GROUP_INDEX -1 // negative for no collisions
+#define CATCHER_SPEED_PX 20
+#define CAPTURE_SHAPE_NOTIFICATION @"CaptureShape"
+
+enum {
+	kTagTileMap = 1,
+	kTagSpriteManager = 1,
+	kTagAnimation1 = 1,
+	kCatcherSprite = 2,
+};
+
+void CatcherContactListener::Add(const b2ContactPoint* point)
+{
+	// handle add point
+}
+
+void CatcherContactListener::Persist(const b2ContactPoint* point)
+{
+	// handle persist point
+	if (point->separation < -0.4f && point->velocity.y < 0)
+	{
+		NSDictionary *dict = [NSDictionary dictionaryWithObject:(AtlasSprite *)point->shape2->GetBody()->GetUserData()
+														 forKey:@"sprite"];
+		[[NSNotificationCenter defaultCenter] postNotificationName:CAPTURE_SHAPE_NOTIFICATION 
+															object:nil
+														  userInfo:dict];
+	}
+}
+
+void CatcherContactListener::Remove(const b2ContactPoint* point)
+{
+	// handle remove point
+}
+
+void CatcherContactListener::Result(const b2ContactResult* point)
+{
+	// handle results
+}
+
 @interface GameLayer (Private)
 
 - (void)setupCatcher;
@@ -18,19 +60,6 @@
 
 @implementation GameLayer
 
-#define PTM_RATIO 32
-#define MAX_VELOCITY 20
-#define MAX_VELOCITY_IN_PX 100
-#define BULLET_GROUP_INDEX -1 // negative for no collisions
-#define CATCHER_SPEED_PX 20
-
-enum {
-	kTagTileMap = 1,
-	kTagSpriteManager = 1,
-	kTagAnimation1 = 1,
-	kCatcherSprite = 2,
-};
-
 - (id)init
 {
 	self = [super init];
@@ -38,6 +67,7 @@ enum {
 	{
 		direction = 1;
 		touchLocations = CFDictionaryCreateMutable(NULL, 0, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+		captured = [[NSMutableArray alloc] init];
 		
 		CGSize screenSize = [Director sharedDirector].winSize;
 		
@@ -50,6 +80,8 @@ enum {
 								 screenSize.height/PTM_RATIO + borderSize); // top right
 		b2Vec2 gravity(0.0f, -20.0f);
 		world = new b2World(worldAABB, gravity, YES);
+		listener = new CatcherContactListener();
+		world->SetContactListener(listener);
 		
 		// set up ground, we will make it as wide as the screen
 		b2BodyDef groundBodyDef;
@@ -72,6 +104,11 @@ enum {
 		[self addChild:manager z:1 tag:kTagSpriteManager];
 		
 		isTouchEnabled = YES;
+		
+		[[NSNotificationCenter defaultCenter] addObserver:self 
+												 selector:@selector(shapeCaptured:) 
+													 name:CAPTURE_SHAPE_NOTIFICATION
+												   object:nil];
 	}
 	return self;
 }
@@ -99,16 +136,28 @@ enum {
 - (void)dealloc
 {
 	delete world;
+	delete listener;
 	world = NULL;
 	body = NULL;
 	catcherBody = NULL;
 	CFRelease(touchLocations);
 	touchLocations = NULL;
+	[captured release];
+	[[NSNotificationCenter defaultCenter] removeObserver:self];
 	[super dealloc];
 }
 
 #pragma mark -
 #pragma mark Actions
+
+- (void)shapeCaptured:(NSNotification *)notification
+{
+	AtlasSprite *sprite = (AtlasSprite *)[notification.userInfo objectForKey:@"sprite"];
+	if (sprite != NULL)
+	{
+		[captured addObject:sprite];
+	}
+}
 
 - (void)tick:(ccTime)dt
 {
@@ -117,6 +166,7 @@ enum {
 	//You need to make an informed choice, the following URL is useful
 	//http://gafferongames.com/game-physics/fix-your-timestep/
 	
+	AtlasSpriteManager *manager = (AtlasSpriteManager*)[self getChildByTag:kTagSpriteManager];
 	Sprite *catcher = (Sprite *)[self getChildByTag:kCatcherSprite];
 	CGPoint p = catcher.position;
 	CGFloat newx = p.x+CATCHER_SPEED_PX*dt*direction;
@@ -129,15 +179,30 @@ enum {
 	
 	world->Step(dt, 10, 8); // step the physics world
 	// iterate over the bodies in the physics world
-	for(b2Body* b = world->GetBodyList(); b; b = b->GetNext())
+	b2Body* node = world->GetBodyList();
+	while (node)
 	{
+		b2Body* b = node;
+		node = node->GetNext();
+		
 		if (b->GetUserData() != NULL) 
 		{
 			// synchronize the AtlasSprites position and rotation with the corresponding body
 			AtlasSprite* actor = (AtlasSprite *)b->GetUserData();
-			actor.position = CGPointMake(b->GetPosition().x*PTM_RATIO, b->GetPosition().y*PTM_RATIO);
-			actor.rotation = -1*CC_RADIANS_TO_DEGREES(b->GetAngle());
-		}	
+			// check to see if this is marked for capture!
+			if ([captured containsObject:actor])
+			{
+				[captured removeObject:actor];
+				
+				world->DestroyBody(b);
+				[manager removeChild:actor cleanup:YES];
+			}
+			else
+			{
+				actor.position = CGPointMake(b->GetPosition().x*PTM_RATIO, b->GetPosition().y*PTM_RATIO);
+				actor.rotation = -1*CC_RADIANS_TO_DEGREES(b->GetAngle());
+			}
+		}
 	}
 }
 
