@@ -22,11 +22,13 @@ public:
 	b2World *world;
 	AtlasSprite *boxSprite;
 	CFMutableDictionaryRef touchLocations;
-	int direction;
+	CGFloat directionUpDown;
+	CGFloat direction;
 	b2Body *body;
 	b2Body *catcherBody;
 	CatcherContactListener *listener;
 	NSMutableArray *captured;
+	int score;
 }
 
 @end

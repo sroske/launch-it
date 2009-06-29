@@ -9,8 +9,8 @@
 #import "GameLayer.h"
 
 #define PTM_RATIO 32
-#define MAX_VELOCITY 24
-#define MAX_VELOCITY_IN_PX 100
+#define MAX_VELOCITY 22
+#define MAX_VELOCITY_IN_PX 150
 #define BULLET_GROUP_INDEX -1 // negative for no collisions
 #define CATCHER_SPEED_PX 20
 #define CAPTURE_SHAPE_NOTIFICATION @"CaptureShape"
@@ -65,7 +65,9 @@ void CatcherContactListener::Result(const b2ContactResult* point)
 	self = [super init];
 	if (self != nil)
 	{
-		direction = 1;
+		score = 0;
+		direction = 1.0f+CCRANDOM_0_1();
+		directionUpDown = 1.0f+CCRANDOM_0_1();
 		touchLocations = CFDictionaryCreateMutable(NULL, 0, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
 		captured = [[NSMutableArray alloc] init];
 		
@@ -84,13 +86,13 @@ void CatcherContactListener::Result(const b2ContactResult* point)
 		world->SetContactListener(listener);
 		
 		// set up cieling, we will make it as wide as the screen
-		b2BodyDef cielingBodyDef;
+		/* b2BodyDef cielingBodyDef;
 		cielingBodyDef.position.Set(screenSize.width/PTM_RATIO/2, (screenSize.height+PTM_RATIO-20)/PTM_RATIO);
 		b2Body* cielingBody = world->CreateBody(&cielingBodyDef);
 		b2PolygonDef cielingShapeDef;
 		cielingShapeDef.restitution = 0.4f;
 		cielingShapeDef.SetAsBox(screenSize.width/PTM_RATIO/2, 1.0f);
-		cielingBody->CreateShape(&cielingShapeDef);
+		cielingBody->CreateShape(&cielingShapeDef); */
 		
 		// set up the left wall, we will make it as tall as the screen
 		b2BodyDef leftBodyDef;
@@ -172,9 +174,11 @@ void CatcherContactListener::Result(const b2ContactResult* point)
 - (void)shapeCaptured:(NSNotification *)notification
 {
 	AtlasSprite *sprite = (AtlasSprite *)[notification.userInfo objectForKey:@"sprite"];
-	if (sprite != NULL)
+	if (sprite != NULL && ![captured containsObject:sprite])
 	{
 		[captured addObject:sprite];
+		score += 100;
+		NSLog(@"score: %i", score);
 	}
 }
 
@@ -190,10 +194,14 @@ void CatcherContactListener::Result(const b2ContactResult* point)
 	CGPoint p = catcher.position;
 	CGFloat newx = p.x+CATCHER_SPEED_PX*dt*direction;
 	if (newx - 32 <= 0 || newx + 32 >= 320) {
-		direction *= -1;
+		direction *= -1.0f;
 	}
-	catcher.position = CGPointMake(newx, p.y);
-	b2Vec2 vec(newx/PTM_RATIO, (p.y+20)/PTM_RATIO);
+	CGFloat newy = p.y+CATCHER_SPEED_PX*dt*directionUpDown;
+	if (newy - 64 <= 0 || newy + 32 >= 440) {
+		directionUpDown *= -1.0f;
+	}
+	catcher.position = CGPointMake(newx, newy);
+	b2Vec2 vec(newx/PTM_RATIO, (newy+20)/PTM_RATIO);
 	catcherBody->SetXForm(vec, 0.0f);
 	
 	world->Step(dt, 10, 8); // step the physics world
