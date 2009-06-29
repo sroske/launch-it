@@ -108,6 +108,7 @@
 		A928AEB60FF7ECC7005CF70D /* GameLayer.mm in Sources */ = {isa = PBXBuildFile; fileRef = A928AEB50FF7ECC7005CF70D /* GameLayer.mm */; };
 		A94D1F090FF8274700E37FAF /* catcher.png in Resources */ = {isa = PBXBuildFile; fileRef = A94D1F070FF8274700E37FAF /* catcher.png */; };
 		A94D1F0A0FF8274700E37FAF /* launcher.png in Resources */ = {isa = PBXBuildFile; fileRef = A94D1F080FF8274700E37FAF /* launcher.png */; };
+		A990C34F0FF853020023F4E1 /* Entitlements.plist in Resources */ = {isa = PBXBuildFile; fileRef = A990C34E0FF853020023F4E1 /* Entitlements.plist */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -312,6 +313,7 @@
 		A928AEB50FF7ECC7005CF70D /* GameLayer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = GameLayer.mm; sourceTree = "<group>"; };
 		A94D1F070FF8274700E37FAF /* catcher.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = catcher.png; sourceTree = "<group>"; };
 		A94D1F080FF8274700E37FAF /* launcher.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = launcher.png; sourceTree = "<group>"; };
+		A990C34E0FF853020023F4E1 /* Entitlements.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Entitlements.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -373,6 +375,7 @@
 		29B97317FDCFA39411CA2CEA /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				A990C34E0FF853020023F4E1 /* Entitlements.plist */,
 				A94D1F070FF8274700E37FAF /* catcher.png */,
 				A94D1F080FF8274700E37FAF /* launcher.png */,
 				A928AEB20FF7ECA6005CF70D /* blocks.png */,
@@ -720,6 +723,7 @@
 				A928AEB30FF7ECA6005CF70D /* blocks.png in Resources */,
 				A94D1F090FF8274700E37FAF /* catcher.png in Resources */,
 				A94D1F0A0FF8274700E37FAF /* launcher.png in Resources */,
+				A990C34F0FF853020023F4E1 /* Entitlements.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -854,6 +858,33 @@
 			};
 			name = Release;
 		};
+		A990C34A0FF852CB0023F4E1 /* Ad Hoc Distribution */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				CODE_SIGN_ENTITLEMENTS = Entitlements.plist;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: space150, LLC";
+				GCC_C_LANGUAGE_STANDARD = c99;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				PREBINDING = NO;
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "719BFCC7-870A-4CEE-933D-8537A4566587";
+				SDKROOT = iphoneos3.0;
+			};
+			name = "Ad Hoc Distribution";
+		};
+		A990C34B0FF852CB0023F4E1 /* Ad Hoc Distribution */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COPY_PHASE_STRIP = YES;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = LaunchIt_Prefix.pch;
+				INFOPLIST_FILE = "LaunchIt-Info.plist";
+				PRODUCT_NAME = LaunchIt;
+			};
+			name = "Ad Hoc Distribution";
+		};
 		C01FCF4F08A954540054247B /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -888,6 +919,7 @@
 			buildConfigurations = (
 				1D6058940D05DD3E006BFB54 /* Debug */,
 				1D6058950D05DD3E006BFB54 /* Release */,
+				A990C34B0FF852CB0023F4E1 /* Ad Hoc Distribution */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -897,6 +929,7 @@
 			buildConfigurations = (
 				C01FCF4F08A954540054247B /* Debug */,
 				C01FCF5008A954540054247B /* Release */,
+				A990C34A0FF852CB0023F4E1 /* Ad Hoc Distribution */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
