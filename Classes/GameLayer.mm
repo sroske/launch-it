@@ -99,7 +99,7 @@ void CatcherContactListener::Result(const b2ContactResult* point)
 		leftBodyDef.position.Set(-1.0f, screenSize.height/PTM_RATIO/2);
 		b2Body* leftBody = world->CreateBody(&leftBodyDef);
 		b2PolygonDef leftShapeDef;
-		leftShapeDef.restitution = 0.4f;
+		leftShapeDef.restitution = 0.9f;
 		leftShapeDef.SetAsBox(1.0f, screenSize.height/PTM_RATIO/2);
 		leftBody->CreateShape(&leftShapeDef);
 		
