@@ -1,5 +1,1 @@
-WARNING, HACK CODE CONTAINED HEREIN!
-
-This was a quick demo I put together for a ill-fated project. It was more of an excuse to play around with cocos2d-iphone (http://www.cocos2d-iphone.org) and Box2D (http://www.box2d.org) than anything else.
-
-It is a very simple game where you pull down on the "launcher" to launch a block in a attempt to get it into the "catcher". Thrilling, I know.
+This is a port/rewrite of the launch-it demo using the impact js (http://www.impactjs.org) framework

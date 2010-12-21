@@ -1,2 +1,5 @@
-build
-LaunchIt.xcodeproj/sroske.*
+logs/*.log
+public/lib/impact
+public/lib/weltmeister
+public/tools
+public/weltmeister.html
